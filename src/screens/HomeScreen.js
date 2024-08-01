@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,9 +14,11 @@ import {
 } from "react-native";
 import { searchRestaurants } from "../services/api";
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import { Linking } from "react-native";
 
 const { width } = Dimensions.get("window");
-const imageSize = width * 0.2; // 20% of screen width
+const imageSize = width * 0.2;
 
 const HomeScreen = () => {
   const [term, setTerm] = useState("");
@@ -26,15 +28,85 @@ const HomeScreen = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  const getCurrentLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Denied",
+        "Location permission is required to use this feature. Please enable it in your device settings.",
+        [
+          { text: "OK" },
+          { text: "Open Settings", onPress: () => Linking.openSettings() },
+        ]
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+      let currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      await reverseGeocode(currentLocation);
+    } catch (error) {
+      console.error("Error getting current location:", error);
+      Alert.alert(
+        "Error",
+        "Failed to get your current location. Please enter it manually."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reverseGeocode = async (location) => {
+    try {
+      const { latitude, longitude } = location.coords;
+      let result = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
+
+      if (result.length > 0) {
+        const { formattedAddress } = result[0];
+
+        if (formattedAddress) {
+          setLocation(formattedAddress);
+          console.log("Formatted Address:", formattedAddress);
+        } else {
+          throw new Error("No formatted address found");
+        }
+      } else {
+        throw new Error("No results found");
+      }
+    } catch (error) {
+      console.error("Error reverse geocoding:", error);
+      Alert.alert(
+        "Error",
+        "Failed to get your precise location. Please enter it manually."
+      );
+    }
+  };
+
   const handleSearchRestaurants = async (resetSearch = true) => {
     if (!location.trim()) {
       Alert.alert("Error", "Please enter a location");
       return;
     }
 
-    if (loading) return; // Prevent multiple simultaneous requests
+    if (loading) return;
 
     setLoading(true);
+    if (resetSearch) {
+      setRestaurants([]);
+      setOffset(0);
+      setHasMore(true);
+    }
+
     try {
       const newOffset = resetSearch ? 0 : offset;
       const response = await searchRestaurants(term, location, newOffset);
@@ -45,17 +117,12 @@ const HomeScreen = () => {
         })
       );
 
-      if (resetSearch) {
-        setRestaurants(newRestaurants);
-      } else {
-        setRestaurants((prevRestaurants) => [
-          ...prevRestaurants,
-          ...newRestaurants,
-        ]);
-      }
+      setRestaurants((prevRestaurants) =>
+        resetSearch ? newRestaurants : [...prevRestaurants, ...newRestaurants]
+      );
 
-      setOffset(newOffset + newRestaurants.length);
-      setHasMore(newRestaurants.length === 20); // Assuming Yelp API returns 20 results per page
+      setOffset((prevOffset) => newOffset + newRestaurants.length);
+      setHasMore(newRestaurants.length === 20);
     } catch (error) {
       console.error("Failed to search restaurants", error);
       Alert.alert("Error", `Failed to search restaurants: ${error.message}`);
@@ -134,12 +201,31 @@ const HomeScreen = () => {
   );
 
   const renderFooter = () => {
-    if (!loading) return null;
+    if (!loading || restaurants.length === 0) return null;
     return (
       <View style={styles.loadingFooter}>
         <ActivityIndicator size="large" color="tomato" />
       </View>
     );
+  };
+
+  const renderListEmptyComponent = () => {
+    if (loading && restaurants.length === 0) {
+      return (
+        <View style={styles.emptyList}>
+          <ActivityIndicator size="large" color="tomato" />
+          <Text style={styles.loadingText}>Searching for restaurants...</Text>
+        </View>
+      );
+    }
+    if (restaurants.length === 0) {
+      return (
+        <View style={styles.emptyList}>
+          <Text>No restaurants found. Try a new search!</Text>
+        </View>
+      );
+    }
+    return null;
   };
 
   return (
@@ -156,14 +242,8 @@ const HomeScreen = () => {
         value={location}
         onChangeText={setLocation}
       />
-      <Button
-        title="Search"
-        onPress={() => {
-          setOffset(0);
-          setHasMore(true);
-          handleSearchRestaurants(true);
-        }}
-      />
+      <Button title="Search" onPress={() => handleSearchRestaurants(true)} />
+      <Button title="Use Current Location" onPress={getCurrentLocation} />
       <FlatList
         data={restaurants}
         renderItem={renderRestaurantItem}
@@ -171,11 +251,7 @@ const HomeScreen = () => {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.1}
         ListFooterComponent={renderFooter}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyList}>
-            <Text>No restaurants found. Try a new search!</Text>
-          </View>
-        )}
+        ListEmptyComponent={renderListEmptyComponent}
       />
     </View>
   );
@@ -275,6 +351,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "gray",
   },
 });
 
