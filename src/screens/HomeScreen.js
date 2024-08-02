@@ -16,6 +16,9 @@ import { searchRestaurants } from "../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { Linking } from "react-native";
+import { loadFavorites, toggleFavorite } from "../utils/favouriteAsync";
+import { useFocusEffect } from "@react-navigation/native";
+import styles from "../styles/style";
 
 const { width } = Dimensions.get("window");
 const imageSize = width * 0.2;
@@ -27,10 +30,32 @@ const HomeScreen = () => {
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
     getCurrentLocation();
+    loadFavoriteRestaurants();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadFavoriteRestaurants();
+    }, [])
+  );
+
+  const loadFavoriteRestaurants = async () => {
+    const loadedFavorites = await loadFavorites();
+    setFavorites(loadedFavorites);
+  };
+
+  const handleToggleFavorite = async (restaurant) => {
+    try {
+      const updatedFavorites = await toggleFavorite(restaurant, favorites);
+      setFavorites(updatedFavorites);
+    } catch (error) {
+      Alert.alert("Error", "Failed to update favorite");
+    }
+  };
 
   const getCurrentLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -196,6 +221,20 @@ const HomeScreen = () => {
           </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#bbb" />
+        <TouchableOpacity
+          style={styles.heartContainer}
+          onPress={() => handleToggleFavorite(item)}
+        >
+          <Ionicons
+            name={
+              favorites.some((fav) => fav.id === item.id)
+                ? "heart"
+                : "heart-outline"
+            }
+            size={24}
+            color="tomato"
+          />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -256,107 +295,5 @@ const HomeScreen = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#f5f5f5",
-  },
-  input: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-    backgroundColor: "white",
-  },
-  loadingFooter: {
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderColor: "#CED0CE",
-  },
-  emptyList: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 50,
-  },
-  cellContainer: {
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    padding: 10,
-  },
-  contentContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  imageContainer: {
-    marginRight: 12,
-  },
-  restaurantImage: {
-    width: imageSize,
-    height: imageSize,
-    borderRadius: 10,
-  },
-  infoContainer: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  restaurantTitle: {
-    fontWeight: "600",
-    fontSize: 17,
-    marginBottom: 6,
-  },
-  addressText: {
-    color: "#888",
-    marginBottom: 6,
-    fontSize: 14,
-  },
-  detailContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  ratingText: {
-    marginLeft: 4,
-    fontSize: 14,
-  },
-  reviewCount: {
-    marginLeft: 4,
-    color: "#888",
-    fontSize: 12,
-  },
-  priceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  priceLabel: {
-    fontSize: 14,
-    color: "#888",
-  },
-  priceCategory: {
-    marginLeft: 5,
-    fontSize: 14,
-  },
-  placeholderImage: {
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 10,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "gray",
-  },
-});
 
 export default HomeScreen;

@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
 import HomeScreen from "./src/screens/HomeScreen";
+import FavoritesScreen from "./src/screens/FavoritesScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -17,10 +18,6 @@ const TabNavigator = () => {
             iconName = focused ? "home" : "home-outline";
           } else if (route.name === "Favorites") {
             iconName = focused ? "heart" : "heart-outline";
-          } else if (route.name === "Login") {
-            iconName = focused ? "log-in" : "log-in-outline";
-          } else if (route.name === "Register") {
-            iconName = focused ? "person-add" : "person-add-outline";
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -36,6 +33,7 @@ const TabNavigator = () => {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Favorites" component={FavoritesScreen} />
     </Tab.Navigator>
   );
 };
