@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, Alert } from "react-native";
+import { View, Text, FlatList, Alert, TouchableOpacity } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import RestaurantItem from "../components/RestaurantItem";
 import styles from "../styles/style";
 import { loadFavorites, toggleFavorite } from "../utils/favouriteAsync";
+import { useNavigation } from "@react-navigation/native";
 
 const FavoritesScreen = () => {
   const [favorites, setFavorites] = useState([]);
+  const navigation = useNavigation();
 
   const loadFavoriteRestaurants = useCallback(async () => {
     const loadedFavorites = await loadFavorites();
@@ -19,6 +21,10 @@ const FavoritesScreen = () => {
     }, [loadFavoriteRestaurants])
   );
 
+  const handleRestaurantPress = (restaurant) => {
+    navigation.navigate("RestaurantDetail", { restaurant });
+  };
+
   const handleToggleFavorite = async (restaurant) => {
     try {
       const updatedFavorites = await toggleFavorite(restaurant, favorites);
@@ -29,11 +35,13 @@ const FavoritesScreen = () => {
   };
 
   const renderFavoriteItem = ({ item }) => (
-    <RestaurantItem
-      item={item}
-      isFavorite={true}
-      onToggleFavorite={handleToggleFavorite}
-    />
+    <TouchableOpacity onPress={() => handleRestaurantPress(item)}>
+      <RestaurantItem
+        item={item}
+        isFavorite={true}
+        onToggleFavorite={handleToggleFavorite}
+      />
+    </TouchableOpacity>
   );
 
   return (

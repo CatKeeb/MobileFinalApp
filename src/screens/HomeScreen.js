@@ -19,6 +19,8 @@ import { Linking } from "react-native";
 import { loadFavorites, toggleFavorite } from "../utils/favouriteAsync";
 import { useFocusEffect } from "@react-navigation/native";
 import styles from "../styles/style";
+import RestaurantItem from "../components/RestaurantItem";
+import { useNavigation } from "@react-navigation/native";
 
 const { width } = Dimensions.get("window");
 const imageSize = width * 0.2;
@@ -31,6 +33,8 @@ const HomeScreen = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [favorites, setFavorites] = useState([]);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
     getCurrentLocation();
@@ -42,6 +46,10 @@ const HomeScreen = () => {
       loadFavoriteRestaurants();
     }, [])
   );
+
+  const handleRestaurantPress = (restaurant) => {
+    navigation.navigate("RestaurantDetail", { restaurant });
+  };
 
   const loadFavoriteRestaurants = async () => {
     const loadedFavorites = await loadFavorites();
@@ -58,6 +66,7 @@ const HomeScreen = () => {
   };
 
   const getCurrentLocation = async () => {
+    setIsFetchingLocation(true);
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
@@ -68,6 +77,7 @@ const HomeScreen = () => {
           { text: "Open Settings", onPress: () => Linking.openSettings() },
         ]
       );
+      setIsFetchingLocation(false);
       return;
     }
 
@@ -85,6 +95,7 @@ const HomeScreen = () => {
       );
     } finally {
       setLoading(false);
+      setIsFetchingLocation(false);
     }
   };
 
@@ -163,79 +174,12 @@ const HomeScreen = () => {
   }, [loading, hasMore, term, location, offset]);
 
   const renderRestaurantItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.cellContainer}
-      onPress={() =>
-        Alert.alert("Restaurant Details", `You selected ${item.name}`)
-      }
-    >
-      <View style={styles.contentContainer}>
-        <View style={styles.imageContainer}>
-          {item.image_url ? (
-            <Image
-              source={{ uri: item.image_url }}
-              style={styles.restaurantImage}
-            />
-          ) : (
-            <View style={[styles.restaurantImage, styles.placeholderImage]}>
-              <Ionicons
-                name="restaurant-outline"
-                size={imageSize * 0.5}
-                color="#888"
-              />
-            </View>
-          )}
-        </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.restaurantTitle}>{item.name}</Text>
-          <Text style={styles.addressText}>
-            {`${item.location.address1}, ${item.location.city}`}
-          </Text>
-          <View style={styles.detailContainer}>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="gold" />
-              <Text style={styles.ratingText}>{item.rating}</Text>
-              <Text style={styles.reviewCount}>
-                ({item.review_count} reviews)
-              </Text>
-            </View>
-            <View style={styles.priceContainer}>
-              <Text style={styles.priceLabel}>Price: </Text>
-              {item.price ? (
-                <Text style={styles.priceCategory}>
-                  {Array(item.price.length)
-                    .fill()
-                    .map((_, i) => (
-                      <Ionicons
-                        key={i}
-                        name="logo-usd"
-                        size={16}
-                        color="green"
-                      />
-                    ))}
-                </Text>
-              ) : (
-                <Text style={styles.priceCategory}>-</Text>
-              )}
-            </View>
-          </View>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color="#bbb" />
-        <TouchableOpacity
-          style={styles.heartContainer}
-          onPress={() => handleToggleFavorite(item)}
-        >
-          <Ionicons
-            name={
-              favorites.some((fav) => fav.id === item.id)
-                ? "heart"
-                : "heart-outline"
-            }
-            size={24}
-            color="tomato"
-          />
-        </TouchableOpacity>
-      </View>
+    <TouchableOpacity onPress={() => handleRestaurantPress(item)}>
+      <RestaurantItem
+        item={item}
+        isFavorite={favorites.some((fav) => fav.id === item.id)}
+        onToggleFavorite={handleToggleFavorite}
+      />
     </TouchableOpacity>
   );
 
@@ -282,7 +226,13 @@ const HomeScreen = () => {
         onChangeText={setLocation}
       />
       <Button title="Search" onPress={() => handleSearchRestaurants(true)} />
-      <Button title="Use Current Location" onPress={getCurrentLocation} />
+      <Button
+        title={
+          isFetchingLocation ? "Fetching location..." : "Use Current Location"
+        }
+        onPress={getCurrentLocation}
+        disabled={isFetchingLocation}
+      />
       <FlatList
         data={restaurants}
         renderItem={renderRestaurantItem}

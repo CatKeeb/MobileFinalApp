@@ -40,6 +40,7 @@ export default StyleSheet.create({
   contentContainer: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 10,
   },
   imageContainer: {
     marginRight: 12,
