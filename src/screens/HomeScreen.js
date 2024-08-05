@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { searchRestaurants } from "../services/api";
-import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { Linking } from "react-native";
 import { loadFavorites, toggleFavorite } from "../utils/favouriteAsync";

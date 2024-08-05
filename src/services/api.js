@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://192.168.79.7:3000";
+const API_URL2 = "http://192.168.79.7:3000";
+const API_URL = "https://mobilefinalbackend.onrender.com";
 
 export const searchRestaurants = (term, location, offset = 0) =>
   axios
@@ -9,12 +10,3 @@ export const searchRestaurants = (term, location, offset = 0) =>
       console.error("API Error:", error.response || error);
       throw error;
     });
-
-export const login = (username, password) =>
-  axios.post(`${API_URL}/login`, { username, password });
-
-export const register = (username, password) =>
-  axios.post(`${API_URL}/register`, { username, password });
-
-export const getFavorites = (token) =>
-  axios.get(`${API_URL}/favorites`, { headers: { Authorization: token } });

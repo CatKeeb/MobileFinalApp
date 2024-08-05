@@ -6,7 +6,6 @@ import { Ionicons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import RestaurantDetailScreen from "../screens/RestaurantDetailScreen";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
