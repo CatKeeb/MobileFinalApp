@@ -224,14 +224,18 @@ const HomeScreen = () => {
         value={location}
         onChangeText={setLocation}
       />
-      <Button title="Search" onPress={() => handleSearchRestaurants(true)} />
-      <Button
-        title={
-          isFetchingLocation ? "Fetching location..." : "Use Current Location"
-        }
-        onPress={getCurrentLocation}
-        disabled={isFetchingLocation}
-      />
+      <View style={styles.buttonContainer}>
+        <Button title="Search" onPress={() => handleSearchRestaurants(true)} />
+      </View>
+      <View style={styles.buttonContainer}>
+        <Button
+          title={
+            isFetchingLocation ? "Fetching location..." : "Use Current Location"
+          }
+          onPress={getCurrentLocation}
+          disabled={isFetchingLocation}
+        />
+      </View>
       <FlatList
         data={restaurants}
         renderItem={renderRestaurantItem}

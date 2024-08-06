@@ -49,7 +49,7 @@ const RestaurantDetailScreen = ({ route }) => {
           "location",
           "Location",
           "red",
-          `${restaurant.location.address1}, ${restaurant.location.city}`
+          `${restaurant.location.display_address.join(", ")}`
         )}
         {renderInfoRow("call", "Phone", "blue", restaurant.phone)}
 

@@ -11,6 +11,9 @@ export default StyleSheet.create({
     padding: 20,
     backgroundColor: "#f5f5f5",
   },
+  buttonContainer: {
+    marginBottom: 10,
+  },
   input: {
     height: 40,
     borderColor: "gray",
@@ -62,7 +65,7 @@ export default StyleSheet.create({
   addressText: {
     color: "#888",
     marginBottom: 6,
-    fontSize: 14,
+    fontSize: 13,
   },
   detailContainer: {
     flexDirection: "row",

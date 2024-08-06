@@ -25,7 +25,7 @@ const RestaurantItem = ({ item, isFavorite, onToggleFavorite }) => {
       <View style={styles.infoContainer}>
         <Text style={styles.restaurantTitle}>{item.name}</Text>
         <Text style={styles.addressText}>
-          {`${item.location.address1}, ${item.location.city}`}
+          {item.location.display_address.join(", ")}
         </Text>
         <View style={styles.detailContainer}>
           <View style={styles.ratingContainer}>
